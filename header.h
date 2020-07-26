@@ -4,7 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <Windows.h>
-#include <WinSock2.h>
+//#include <WinSock2.h>
 //#include <tm32f10x.h>
 #include <stdint.h>
 
@@ -16,7 +16,12 @@ using namespace std;
 
 //域名解析表最大长度
 #define MAX_AMOUNT 500
-
+#define DEFAULT_DNS_ADDRESS "192.168.146.2" //外部DNS服务器地址
+#define DEFAULT_LOCAL_ADDRESS "127.0.0.1" //本地DNS服务器地址
+#define DNS_PORT 53 //进行DNS服务的53端口
+#define BUF_SIZE 512
+#define LENGTH 65
+#define NOTFOUND -1
 
 
 ///////////////////结构体的定义////////////////
@@ -53,7 +58,6 @@ typedef struct {
 typedef struct {
 	unsigned short formerID;
 	BOOL DONE;
-
 	SOCKADDR_IN client;
 }IDTransform;
 
