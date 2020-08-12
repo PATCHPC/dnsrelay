@@ -13,21 +13,71 @@ int main(int argc, char** argv) {
 	char outerDns[16];
 	int iLen_cli, iSend, iRecv;
 	int num;
-
+	int i, debug_level;
 	//分析指令
-	//（删）这一块和参考的地方有所区别。
-	if (argc == 1) {
-		strcpy(outerDns, DEFAULT_DNS_ADDRESS);
-		strcpy(tablePath, "");
+	//（删）这一块和参考的地方有所区别。[已删]
+	WSAStartup(MAKEWORD(2, 2), &wsaData);           //initialize the WinSock service
+	socketServer = socket(AF_INET, SOCK_DGRAM, 0);  //create extern socket
+	socketLocal = socket(AF_INET, SOCK_DGRAM, 0);   //create local socket
+
+	//keep time
+	GetLocalTime(&sys);
+	Day = sys.wDay;
+	Hour = sys.wHour;
+	Minute = sys.wMinute;
+	Second = sys.wSecond;
+	Milliseconds = sys.wMilliseconds;
+
+	//inicialize the socket
+	localName.sin_family = AF_INET;
+	localName.sin_port = htons(DNS_PORT);
+	localName.sin_addr.s_addr = inet_addr(DEFAULT_LOCAL_ADDRESS); //set to local address
+
+	serverName.sin_family = AF_INET;
+	serverName.sin_port = htons(DNS_PORT);
+	serverName.sin_addr.s_addr = inet_addr(outerDns);  //set to out address
+
+	//inicialize the ID table
+	for (i = 0; i < AMOUNT; i++)
+	{
+		idTransTable[i].formerID = 0;
+		idTransTable[i].DONE = FALSE;
+		memset(&(idTransTable[i].client), 0, sizeof(SOCKADDR_IN));
 	}
-	else if (argc == 2) {
-		strcpy(outerDns, argv[1]);
-		strcpy(tablePath, "C:\\Windows\\System32\\dnsrelay.txt");
+
+	//process parameter
+	for (i = 1; i < argc; ++i)
+	{
+		if (argv[i][0] == '-')
+		{
+			if (argv[i][1] == 'd' && argv[i][2] == 'd')
+			{
+				debug_level = 2;
+				strcpy(outerDns, argv[2]);
+				strcpy(tablePath, "...dnsrelay.txt");     //需要加入路径
+			}
+			else
+			{
+				debug_level = 1;
+				strcpy(outerDns, argv[2]);
+				strcpy(tablePath, argv[3]);
+			}
+		}
+		else
+		{
+			debug_level = 0;
+			strcpy(outerDns, DEFAULT_DNS_ADDRESS);
+			strcpy(tablePath, "....dnsrelay.txt");   //需要加入路径
+		}
 	}
-	else if (argc == 3) {
-		strcpy(outerDns, argv[1]);
-		strcpy(tablePath, argv[2]);
+	num = ReadTable(tablePath);  //the number of the table
+
+	if (bind(socketLocal, (SOCKADDR*)&localName, sizeof(localName))) {
+		printf("Binding Port 53 failed.\n");
+		exit(1);
 	}
+	else
+		printf("Binding Port 53 succeed.\n");
 
 
 	//本地DNS中继服务器的具体操作

@@ -7,7 +7,7 @@
 //#include <WinSock2.h>
 //#include <tm32f10x.h>
 #include <stdint.h>
-
+#include<time.h>
 
 
 using namespace std;
@@ -22,6 +22,7 @@ using namespace std;
 #define BUF_SIZE 512
 #define LENGTH 65
 #define NOTFOUND -1
+#define AMOUNT 1
 
 
 ///////////////////结构体的定义////////////////
@@ -67,7 +68,10 @@ extern IPTranslate dnsTable[MAX_AMOUNT];
 extern IDTransform idTransTable[MAX_AMOUNT];
 extern char url[LENGTH];//域名 （为啥要放全局啊俺也不懂
 
+SYSTEMTIME sys;
+extern int Day, Hour, Minute, Second, Milliseconds;
 
+extern int IDcount = 0;
 /////////////////算法（？）函数////////////////
 
 //读取DNS请求中的域名

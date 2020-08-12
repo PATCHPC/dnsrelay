@@ -24,8 +24,8 @@ int ReadTable(char* tablePath) {
 		if (pos > table[j].size())
 			cout << "The record is not in a correct format. " << endl;
 		else {
-			DNS_table[j].IP = table[j].substr(0, pos);
-			DNS_table[j].domain = table[j].substr(pos+1);
+			dnsTable[j].IP = table[j].substr(0, pos);
+			dnsTable[j].domain = table[j].substr(pos+1);
 		}
 	}
 
@@ -39,5 +39,72 @@ int ReadTable(char* tablePath) {
 
 //IO：打印时间、新id、功能、域名、IP
 void DisplayInfo(unsigned short newID, int find) {
+	//print time
+	GetLocalTime(&sys);
+	if (sys.wMilliseconds >= Milliseconds)
+	{
+		printf("%7d", (((sys.wDay - Day) * 24 + sys.wHour - Hour) * 60 + sys.wMinute - Minute) * 60 + sys.wSecond - Second);
+		printf(".%03d", sys.wMilliseconds - Milliseconds);
+	}
+	else
+	{
+		printf("%7d", (((sys.wDay - Day) * 24 + sys.wHour - Hour) * 60 + sys.wMinute - Minute) * 60 + sys.wSecond - Second - 1);
+		printf(".%03d", 1000 + sys.wMilliseconds - Milliseconds);
+	}
+	printf("    ");
 
+	//print new ID
+	printf("%-4u", newID);
+	printf("    ");
+
+	//if dns not found
+	if (find == NOTFOUND)
+	{
+		printf("    中继");
+		printf("    ");
+		//print url
+		printf("%-20s", url);
+		printf("    ");
+		//print IP
+		printf("                     \n");
+
+	}
+	//ip found
+	else
+	{
+		if (dnsTable[find].IP == "0.0.0.0")
+		{
+			printf("    屏蔽");
+			printf("    ");
+
+			printf("*%-19s", url);
+			printf("    ");
+
+			printf("                     \n");
+		}
+		else
+		{
+			printf("   服务器");
+			printf("    ");
+
+			printf("*%-19s", url);
+			printf("    ");
+
+			printf("%-20s\n", dnsTable[find].IP);
+		}
+	}
+}
+
+
+//输出完整信息？
+void standard_print(char* buf, int length)
+{
+	unsigned char tage;
+	printf("receive len=%d: ", length);
+	for (int i = 0;i < length;i++)
+	{
+		tage = (unsigned char)buf[i];
+		printf("%02x ", tage);
+	}
+	printf("\n");
 }

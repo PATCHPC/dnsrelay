@@ -7,7 +7,7 @@ void GetUrl(char *recvbuf, int recvnum)
 	int i = 0, j, k = 0;
 
 	memset(url, 0, LENGTH);
-	memcpy(urlname, &(recvbuf[sizeof(DNSHDR)]), recvnum-16);	//获取请求报文中的域名表示
+	memcpy(urlname, &(recvbuf[sizeof(DNSHeader)]), recvnum-16);	//获取请求报文中的域名表示
 
 	int len = strlen(urlname);
 	
@@ -32,7 +32,7 @@ int IsFind(char* url, int num)
 	char* domain;
 
 	for (int i = 0; i < num; i++) {
-		domain = (char *)DNS_table[i].domain.c_str();
+		domain = (char *)dnsTable[i].domain.c_str();
 		if (strcmp(domain, url) == 0) {	//找到
 			find = i;
 			break;
@@ -45,9 +45,9 @@ int IsFind(char* url, int num)
 unsigned short RegisterNewID (unsigned short oID, SOCKADDR_IN temp, BOOL ifdone)
 {
 	srand(time(NULL));
-	IDTransTable[IDcount].oldID = oID;
-	IDTransTable[IDcount].client = temp;
-	IDTransTable[IDcount].done  = ifdone;
+	idTransTable[IDcount].formerID = oID;
+	idTransTable[IDcount].client = temp;
+	idTransTable[IDcount].DONE  = ifdone;
 	IDcount++;
 	return (unsigned short)(IDcount-1);	//以表中下标作为新的ID
 }
