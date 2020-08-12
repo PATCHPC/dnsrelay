@@ -2,35 +2,39 @@
 
 //IO：读取域名解析表并返回域名解析表中的条目个数
 int ReadTable(char* tablePath) {
-	int i=0, j, pos=0;
-	string table[AMOUNT];
+	int i=0, j;
+	char *pos;
+	char *table[AMOUNT];
+	FILE *fp;
 
-	ifstream infile(tablePath, ios::in);	//以读入方式打开文本文件
+	//ifstream infile(tablePath, ios::in);	//以读入方式打开文本文件
 
-	if(! infile) {
-		cerr << "Open" << tablePath << "error!" <<endl;
+	if((fp = fopen(tablePath, "rt")) == NULL) {
+		printf("Open file error!\n");
 		exit(1);
 	}
 
 	//每次从文件中读入一行，直至读到文件结束符为止
-	while (getline(infile, table[i]) && i < AMOUNT)
+	while (fgets(table[i], 100 , fp) && i < AMOUNT)
 		i++;
 
 	if (i == AMOUNT-1)
-		cout << "The DNS table memory is full. " << endl;
+		printf("The DNS table memory is full. \n");
 
 	for (j = 0; j < i-1; j++) {
-		pos = table[j].find(' ');
-		if (pos > table[j].size())
-			cout << "The record is not in a correct format. " << endl;
+		pos = strchr(table[j] , ' ');
+		if (pos-table[j] > strlen(table[j]))
+			printf("The record is not in a correct format. \n");
 		else {
-			dnsTable[j].IP = table[j].substr(0, pos);
-			dnsTable[j].domain = table[j].substr(pos+1);
+			strlen(DNS_table[j].IP , table[j] , abs(pos-table[j]));
+			strlen(DNS_table[j].domain , pos);
+			//DNS_table[j].IP = table[j].substr(0, pos);
+			//DNS_table[j].domain = table[j].substr(pos+1);
 		}
 	}
 
-	infile.close();		//关闭文件
-	cout << "Load records succeed. " << endl;
+	fclose(fp);		//关闭文件
+	printf("Load records succeed. \n");
 
 	return i-1;			//返回域名解析表中条目个数
 }
