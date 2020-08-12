@@ -69,8 +69,6 @@ extern char url[LENGTH];//域名 （为啥要放全局啊俺也不懂
 
 
 /////////////////算法（？）函数////////////////
-//获取域名解析表
-int GetTable(char *tablePath);
 
 //读取DNS请求中的域名
 void GetUrl(char* recvbuf, int recvnum);
