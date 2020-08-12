@@ -1,5 +1,4 @@
 ﻿#include "header.h"
-
 //函数：获取域名解析表
 int GetTable(char *tablePath)
 {
@@ -9,7 +8,6 @@ int GetTable(char *tablePath)
 	FILE *fp;
 
 	//ifstream infile(tablePath, ios::in);	//以读入方式打开文本文件
-
 	if((fp = fopen(tablePath, "rt")) == NULL) {
 		printf("Open file error!\n");
 		exit(1);
@@ -36,10 +34,8 @@ int GetTable(char *tablePath)
 
 	fclose(fp);		//关闭文件
 	printf("Load records succeed. \n");
-
 	return i-1;			//返回域名解析表中条目个数
 }
-
 
 //读取DNS请求中的域名
 void GetUrl(char *recvbuf, int recvnum)
@@ -63,7 +59,6 @@ void GetUrl(char *recvbuf, int recvnum)
 		    k++;
 		}
 	}
-
 	url[k] = '\0';
 }
 
@@ -80,7 +75,6 @@ int IsFind(char* url, int num)
 			break;
 		}
 	}
-
 	return find;
 }
 
@@ -92,6 +86,5 @@ unsigned short RegisterNewID (unsigned short oID, SOCKADDR_IN temp, BOOL ifdone)
 	IDTransTable[IDcount].client = temp;
 	IDTransTable[IDcount].done  = ifdone;
 	IDcount++;
-
 	return (unsigned short)(IDcount-1);	//以表中下标作为新的ID
 }
