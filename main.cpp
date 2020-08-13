@@ -171,7 +171,7 @@ int main(int argc, char** argv) {
 
 				//修改回答数域
 
-				if (strcmp(dnsTable[find].IP, "0.0.0.0") == 0)
+				if (strcmp(DNS_table[find].IP, "0.0.0.0") == 0)
 					a = htons(0x0000);	//屏蔽功能：回答数为0
 				else
 					a = htons(0x0001);	//服务器功能：回答数为1
@@ -200,7 +200,7 @@ int main(int argc, char** argv) {
 				memcpy(answer + curLen, &IPLen, sizeof(unsigned short));
 				curLen += sizeof(unsigned short);
 
-				unsigned long IP = (unsigned long)inet_addr(dnsTable[find].IP);
+				unsigned long IP = (unsigned long)inet_addr(DNS_table[find].IP);
 				memcpy(answer + curLen, &IP, sizeof(unsigned long));
 				curLen += sizeof(unsigned long);
 				curLen += iRecv;
@@ -223,3 +223,4 @@ int main(int argc, char** argv) {
 		}
 
 	}
+}

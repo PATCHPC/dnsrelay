@@ -2,32 +2,32 @@
 
 //IO：读取域名解析表并返回域名解析表中的条目个数
 int ReadTable(char* tablePath) {
-	int i=0, j;
-	char *pos;
-	char *table[AMOUNT];
-	FILE *fp;
+	int i = 0, j;
+	char* pos;
+	char* table[AMOUNT];
+	FILE* fp;
 
 	//ifstream infile(tablePath, ios::in);	//以读入方式打开文本文件
 
-	if((fp = fopen(tablePath, "rt")) == NULL) {
+	if ((fp = fopen(tablePath, "rt")) == NULL) {
 		printf("Open file error!\n");
 		exit(1);
 	}
 
 	//每次从文件中读入一行，直至读到文件结束符为止
-	while (fgets(table[i], 100 , fp) && i < AMOUNT)
+	while (fgets(table[i], 100, fp) && i < AMOUNT)
 		i++;
 
-	if (i == AMOUNT-1)
+	if (i == AMOUNT - 1)
 		printf("The DNS table memory is full. \n");
 
-	for (j = 0; j < i-1; j++) {
-		pos = strchr(table[j] , ' ');
-		if (pos-table[j] > strlen(table[j]))
+	for (j = 0; j < i - 1; j++) {
+		pos = strchr(table[j], ' ');
+		if (pos - table[j] > strlen(table[j]))
 			printf("The record is not in a correct format. \n");
 		else {
-			strlen(DNS_table[j].IP , table[j] , abs(pos-table[j]));
-			strlen(DNS_table[j].domain , pos);
+			strlen(DNS_table[j].IP, table[j], abs(pos - table[j]));
+			strlen(DNS_table[j].domain, pos);
 			//DNS_table[j].IP = table[j].substr(0, pos);
 			//DNS_table[j].domain = table[j].substr(pos+1);
 		}
@@ -36,7 +36,7 @@ int ReadTable(char* tablePath) {
 	fclose(fp);		//关闭文件
 	printf("Load records succeed. \n");
 
-	return i-1;			//返回域名解析表中条目个数
+	return i - 1;			//返回域名解析表中条目个数
 }
 
 
@@ -76,7 +76,7 @@ void DisplayInfo(unsigned short newID, int find) {
 	//ip found
 	else
 	{
-		if (dnsTable[find].IP == "0.0.0.0")
+		if (DNS_table[find].IP == "0.0.0.0")
 		{
 			printf("    屏蔽");
 			printf("    ");
@@ -94,7 +94,7 @@ void DisplayInfo(unsigned short newID, int find) {
 			printf("*%-19s", url);
 			printf("    ");
 
-			printf("%-20s\n", dnsTable[find].IP);
+			printf("%-20s\n", DNS_table[find].IP);
 		}
 	}
 }
@@ -105,7 +105,7 @@ void standard_print(char* buf, int length)
 {
 	unsigned char tage;
 	printf("receive len=%d: ", length);
-	for (int i = 0;i < length;i++)
+	for (int i = 0; i < length; i++)
 	{
 		tage = (unsigned char)buf[i];
 		printf("%02x ", tage);

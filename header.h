@@ -64,7 +64,7 @@ typedef struct {
 
 //常量的定义
 //为防止重复定义加了extern
-extern IPTranslate dnsTable[MAX_AMOUNT];
+extern IPTranslate DNS_table[MAX_AMOUNT];
 extern IDTransform idTransTable[MAX_AMOUNT];
 extern char url[LENGTH];//域名 （为啥要放全局啊俺也不懂
 
