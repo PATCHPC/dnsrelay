@@ -10,7 +10,7 @@
 #include<time.h>
 
 
-using namespace std;
+//using namespace std;
 #pragma comment(lib,"wsock32.lib")
 
 
