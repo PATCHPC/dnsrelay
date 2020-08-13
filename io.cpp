@@ -23,7 +23,7 @@ int ReadTable(char* tablePath) {
 
 	for (j = 0; j < i - 1; j++) {
 		pos = strchr(table[j], ' ');
-		if (pos - table[j] > strlen(table[j]))
+		if ( (unsigned)abs(pos - table[j]) > strlen(table[j]))
 			printf("The record is not in a correct format. \n");
 		else {
 			strncpy(DNS_table[j].IP, table[j], abs(pos - table[j]));
