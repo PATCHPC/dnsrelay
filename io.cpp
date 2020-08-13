@@ -26,8 +26,8 @@ int ReadTable(char* tablePath) {
 		if (pos - table[j] > strlen(table[j]))
 			printf("The record is not in a correct format. \n");
 		else {
-			strlen(DNS_table[j].IP, table[j], abs(pos - table[j]));
-			strlen(DNS_table[j].domain, pos);
+			strncpy(DNS_table[j].IP, table[j], abs(pos - table[j]));
+			strcpy(DNS_table[j].domain, pos);
 			//DNS_table[j].IP = table[j].substr(0, pos);
 			//DNS_table[j].domain = table[j].substr(pos+1);
 		}
