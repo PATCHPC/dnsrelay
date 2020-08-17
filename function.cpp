@@ -1,5 +1,5 @@
 ﻿#include "header.h"
-
+#pragma once
 //读取DNS请求中的域名
 void GetUrl(char* recvbuf, int recvnum)
 {
@@ -32,7 +32,9 @@ int IsFind(char* url, int num)
 	char* domain;
 
 	for (int i = 0; i < num; i++) {
-		domain = (char*)DNS_table[i].domain.c_str();
+		//strcpy(domain, DNS_table[i].domain);
+		domain = DNS_table[i].domain;
+		//domain = (char*)DNS_table[i].domain.c_str();
 		if (strcmp(domain, url) == 0) {	//找到
 			find = i;
 			break;

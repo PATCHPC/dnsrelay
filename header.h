@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include<time.h>
 
+#pragma warning(disable:4996)
+
 
 //using namespace std;
 #pragma comment(lib,"wsock32.lib")

@@ -116,7 +116,7 @@ int main(int argc, char** argv) {
 				//把recvbuf转发至指定的外部DNS服务器
 				iSend = sendto(socketServer, recvbuf, iRecv, 0, (SOCKADDR*)&serverName, sizeof(serverName));
 				if (iSend == SOCKET_ERROR) {
-					printf("sendto Failed:s%\n", WSAGetLastError());
+					printf("sendto Failed:%s\n", WSAGetLastError());
 					//cout << "sendto Failed: " << WSAGetLastError() << endl;
 					continue;
 				}
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
 				//把recvbuf转发至请求者处
 				iSend = sendto(socketLocal, recvbuf, iRecv, 0, (SOCKADDR*)&clientName, sizeof(clientName));
 				if (iSend == SOCKET_ERROR) {
-					printf("send to Failed:s%\n", WSAGetLastError());
+					printf("send to Failed:%s \n", WSAGetLastError());
 					//cout << "sendto Failed: " << WSAGetLastError() << endl;
 					continue;
 				}
@@ -211,7 +211,7 @@ int main(int argc, char** argv) {
 				//发送DNS响应报文
 				iSend = sendto(socketLocal, sendbuf, curLen, 0, (SOCKADDR*)&clientName, sizeof(clientName));
 				if (iSend == SOCKET_ERROR) {
-					printf("send to Failed:s%\n", WSAGetLastError());
+					printf("send to Failed:%s \n", WSAGetLastError());
 					//cout << "sendto Failed: " << WSAGetLastError() << endl;
 					continue;
 				}

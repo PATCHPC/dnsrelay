@@ -1,5 +1,5 @@
 ﻿#include "header.h"
-
+#pragma once
 //IO：读取域名解析表并返回域名解析表中的条目个数
 int ReadTable(char* tablePath) {
 	int i = 0, j;
@@ -23,7 +23,7 @@ int ReadTable(char* tablePath) {
 
 	for (j = 0; j < i - 1; j++) {
 		pos = strchr(table[j], ' ');
-		if ( (unsigned)abs(pos - table[j]) > strlen(table[j]))
+		if ((unsigned)abs(pos - table[j]) > strlen(table[j]))
 			printf("The record is not in a correct format. \n");
 		else {
 			strncpy(DNS_table[j].IP, table[j], abs(pos - table[j]));
