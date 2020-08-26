@@ -19,6 +19,9 @@
 #include<time.h>
 #include<iostream>
 
+//#include<sys/time.h>
+#include<stdint.h>
+
 using namespace std;
 
 
@@ -415,32 +418,15 @@ int ReadTable(char* tablePath) {
 void DisplayInfo(unsigned short newID, int find) {
 
 	//print time
-
-	GetLocalTime(&sys);
-
-	if (sys.wMilliseconds >= Milliseconds)
-
-	{
-
-		printf("%7d", (((sys.wDay - Day) * 24 + sys.wHour - Hour) * 60 + sys.wMinute - Minute) * 60 + sys.wSecond - Second);
-
-		printf(".%03d", sys.wMilliseconds - Milliseconds);
-
-	}
-
-	else
-
-	{
-
-		printf("%7d", (((sys.wDay - Day) * 24 + sys.wHour - Hour) * 60 + sys.wMinute - Minute) * 60 + sys.wSecond - Second - 1);
-
-		printf(".%03d", 1000 + sys.wMilliseconds - Milliseconds);
-
-	}
+	
+		SYSTEMTIME sys;
+		GetLocalTime(&sys);
+		printf("%4d/%02d/%02d %02d:%02d:%02d.%03d \n", sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond, sys.wMilliseconds);
+	
 
 	printf("    ");
 
-
+	//printf("Client %s  ", url);
 
 	//print new ID
 
@@ -535,6 +521,7 @@ void standard_print(char* buf, int length)
 {
 
 	unsigned char tage;
+	int num;
 
 	printf("receive len=%d: ", length);
 
@@ -547,34 +534,78 @@ void standard_print(char* buf, int length)
 		printf("%02x ", tage);
 
 	}
+	printf("\n");
+	for (int i = 0; i < length; i++)
 
+	{
+		
+		tage = (unsigned char)buf[i];
+		if (i == 0)
+		{
+			printf("ID %02x", tage);
+		}
+		if (i == 1)
+		    printf("%02x, ", tage);
+		if (i == 2)
+		{
+            printf("QR %x, ", tage >> 7);
+			printf("OPCODE %x, ", (tage << 1) >> 4);
+			printf("AA %x, ", (tage << 5) >> 7);
+			printf("TC %x, ", (tage << 6) >> 7);
+			printf("RD %x, ", (tage << 7) >> 7);
+		}
+		if (i == 3)
+		{
+			printf("RA %x, ", tage >> 7);
+			printf("Z %x, ", (tage << 1) >> 5);
+			printf("RCODE %x\n", (tage << 4) >> 4);
+		}
+		if (i == 4)
+		{
+			num = (int)tage;
+		}
+		if (i == 5)
+		{
+            printf("QDCOUNT %d ,", num  * 128 + (int)tage);
+		}
+			
+		if (i == 6)
+		{
+			num = (int)tage;
+		}
+		if (i == 7)
+		{
+			printf("ANCOUNT %d ,", num * 128 + (int)tage);
+		}
+		if (i == 8)
+		{
+			num = (int)tage;
+		}
+		if (i == 9)
+		{
+			printf("NSCOUNT %d ,", num * 128 + (int)tage);
+		}
+		if (i == 10)
+		{
+			num = (int)tage;
+		}
+		if (i == 11)
+		{
+			printf("ARCOUNT %d ", num * 128 + (int)tage);
+		}
+	}
 	printf("\n");
 
 }
 
 
-BOOL EnablePriv()
-{
-	HANDLE hToken;
-	if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
-	{
-		TOKEN_PRIVILEGES tkp;
 
-		LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &tkp.Privileges[0].Luid);//修改进程权限
-		tkp.PrivilegeCount = 1;
-		tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-		AdjustTokenPrivileges(hToken, FALSE, &tkp, sizeof tkp, NULL, NULL);//通知系统修改进程权限
-
-		return((GetLastError() == ERROR_SUCCESS));
-	}
-	return TRUE;
-}
 
 
 int main(int argc, char** argv) {
 
 
-	EnablePriv();
+
 	//定义常量
 
 	WSADATA wsaData;
@@ -598,6 +629,8 @@ int main(int argc, char** argv) {
 	int num;
 
 	int i, debug_level;
+
+	int count = 0;
 
 	//分析指令
 
@@ -840,7 +873,7 @@ int main(int argc, char** argv) {
 	//本地DNS中继服务器的具体操作
 
 	while (1) {
-
+		
 		iLen_cli = sizeof(clientName);
 
 		memset(recvbuf, 0, BUF_SIZE);
@@ -851,8 +884,7 @@ int main(int argc, char** argv) {
 
 		iRecv = recvfrom(socketLocal, recvbuf, sizeof(recvbuf), 0, (SOCKADDR*)&clientName, &iLen_cli);
 
-
-
+		
 		if (iRecv == SOCKET_ERROR) {
 		//	cout << WSAGetLastError();
 //			printf("Recvfrom Failed:%s\n", WSAGetLastError());
@@ -873,8 +905,13 @@ int main(int argc, char** argv) {
 
 			int find = IsFind(url, num);		//在域名解析表中查找
 
+		
+			if (debug_level >= 1)
+			{
+				printf("%d:  ", count);
 
-
+			}
+			count++;
 			printf("%s", url);
 
 			//cout << url << endl;
@@ -894,14 +931,11 @@ int main(int argc, char** argv) {
 				unsigned short nID = htons(RegisterNewID(ntohs(*pID), clientName, FALSE));
 
 				memcpy(recvbuf, &nID, sizeof(unsigned short));
-
-
-
 				//打印 时间 newID 功能 域名 IP
-
-				DisplayInfo(ntohs(nID), find);
-
-
+				if (debug_level == 1)
+				{
+                     DisplayInfo(ntohs(nID), find);
+				}
 
 				//把recvbuf转发至指定的外部DNS服务器
 
