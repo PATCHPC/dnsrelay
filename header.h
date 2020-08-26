@@ -66,14 +66,14 @@ typedef struct {
 
 //常量的定义
 //为防止重复定义加了extern
-extern IPTranslate DNS_table[MAX_AMOUNT];
-extern IDTransform idTransTable[MAX_AMOUNT];
-extern char url[LENGTH];//域名 （为啥要放全局啊俺也不懂
+IPTranslate DNS_table[MAX_AMOUNT];
+IDTransform idTransTable[MAX_AMOUNT];
+char url[LENGTH];//域名 （为啥要放全局啊俺也不懂
 
 SYSTEMTIME sys;
-extern int Day, Hour, Minute, Second, Milliseconds;
+int Day, Hour, Minute, Second, Milliseconds;
 
-extern int IDcount = 0;
+int IDcount = 0;
 /////////////////算法（？）函数////////////////
 
 //读取DNS请求中的域名
