@@ -24,7 +24,7 @@
 #define BUF_SIZE 512
 #define LENGTH 65
 #define NOTFOUND -1
-#define AMOUNT 1
+#define AMOUNT 300
 
 
 ///////////////////结构体的定义////////////////
@@ -171,10 +171,15 @@ int ReadTable(char* tablePath) {
 	}
 
 	//每次从文件中读入一行，直至读到文件结束符为止
+	table[i] = (char*)malloc(100 * sizeof(char));
+	memset(table[i], 0, 100);
 	while (fgets(table[i], 100, fp) && i < AMOUNT)
+	{
 		i++;
-
-	if (i == AMOUNT - 1)
+		table[i] = (char*)malloc(100 * sizeof(char));
+		memset(table[i], 1, 100);
+	}
+	if (i == AMOUNT)
 		printf("The DNS table memory is full. \n");
 
 	for (j = 0; j < i - 1; j++) {
@@ -182,6 +187,7 @@ int ReadTable(char* tablePath) {
 		if ((unsigned)abs(pos - table[j]) > strlen(table[j]))
 			printf("The record is not in a correct format. \n");
 		else {
+			//DNS_table[j] = (IPTranslate*)malloc(sizeof(IPTranslate));
 			strncpy(DNS_table[j].IP, table[j], abs(pos - table[j]));
 			strcpy(DNS_table[j].domain, pos);
 			//DNS_table[j].IP = table[j].substr(0, pos);
@@ -314,31 +320,82 @@ int main(int argc, char** argv) {
 		idTransTable[i].DONE = FALSE;
 		memset(&(idTransTable[i].client), 0, sizeof(SOCKADDR_IN));
 	}
+	for (i = 0; i < AMOUNT; i++)
+	{
+		DNS_table[i].IP = (char*)malloc(30 * sizeof(char));
+		memset(DNS_table[i].IP, 0, 30);
+		DNS_table[i].domain = (char*)malloc(30 * sizeof(char));
+		memset(DNS_table[i].domain, 0, 30);
+	}
+
+
 
 	//process parameter
-	for (i = 1; i < argc; ++i)
+
+
+
+	if (argc == 1)   //只有denrelay，全为默认值
 	{
-		if (argv[i][0] == '-')
+		debug_level = 0;
+		strcpy(outerDns, DEFAULT_DNS_ADDRESS);
+		strcpy(tablePath, "dnsrelay.txt");   //需要加入路径
+	}
+	else   //有大于1个参数
+	{
+		if (argv[1][0] == '-')
 		{
-			if (argv[i][1] == 'd' && argv[i][2] == 'd')
+			if (argv[1][1] == 'd' && argv[1][2] == 'd')  //完整输出
 			{
 				debug_level = 2;
-				strcpy(outerDns, argv[2]);
-				strcpy(tablePath, "...dnsrelay.txt");     //需要加入路径
 			}
 			else
 			{
 				debug_level = 1;
-				strcpy(outerDns, argv[2]);
+			}
+			if (argc == 2)  //dnsrelay -dd 或 dnsrelay -d
+			{
+				strcpy(outerDns, DEFAULT_DNS_ADDRESS);
+				strcpy(tablePath, "dnsrelay.txt");   //需要加入路径
+			}
+			else if (argc == 3)
+			{
+				if (argv[2][0] >= '0' && argv[2][0] <= '9')  //dnsrealy -dd 1.1.1.1 或 dnsrelay -d 1.1.1.1
+				{
+					strcpy(outerDns, argv[2]);
+					strcpy(tablePath, "dnsrelay.txt");
+				}
+				else if ((argv[2][0] >= 'A' && argv[2][0] <= 'Z') || (argv[2][0] >= 'a' && argv[2][0] <= 'z'))  //dnsrelay -dd c: 或 dnsrelay -d c:
+				{
+					strcpy(outerDns, DEFAULT_DNS_ADDRESS);
+					strcpy(tablePath, argv[2]);  //dnsrelay C:
+				}
+			}
+			else if (argc == 4)
+			{
 				strcpy(tablePath, argv[3]);
+				strcpy(outerDns, argv[2]);
 			}
 		}
-		else
+		else if (argv[1][0] >= '0' && argv[1][0] <= '9')
+		{
+			debug_level = 0;
+			strcpy(outerDns, argv[1]);
+			if (argc == 3)
+			{
+				strcpy(tablePath, argv[2]);   //dnsrelay 1.1.1.1 c:
+			}
+			else
+			{
+				strcpy(tablePath, "dnsrelay.txt");   //dnsrelay 1.1.1.1 
+			}
+		}
+		else if ((argv[1][0] >= 'A' && argv[1][0] <= 'Z') || (argv[1][0] >= 'a' && argv[1][0] <= 'z'))
 		{
 			debug_level = 0;
 			strcpy(outerDns, DEFAULT_DNS_ADDRESS);
-			strcpy(tablePath, "...dnsrelay.txt");   //需要加入路径
+			strcpy(tablePath, argv[1]);  //dnsrelay C:
 		}
+
 	}
 	num = ReadTable(tablePath);  //the number of the table
 
