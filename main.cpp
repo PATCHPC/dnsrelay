@@ -420,24 +420,7 @@ void printtime()
 }
 
 
-
-//IO：打印时间、新id、功能、域名、IP
-
-void DisplayInfo(unsigned short newID, int find) {
-
-	//print time
-	printtime();
-
-	printf("    ");
-
-	printf("Client 127.0.0.1   %s\n", url);
-
-}
-
-
-
-
-//输出完整信息？
+//输出完整信息
 
 void standard_print(char* buf, int length)
 
@@ -839,6 +822,12 @@ int main(int argc, char** argv) {
 				printf("Client: %s ", inet_ntoa(clientName.sin_addr));
 				printf(" %s\n", url);
 			}
+			if (debug_level == 2)
+			{
+				printf("%d:  ", count);
+				printtime();
+				
+			}
         		count++;
 //			printf("%s", url);
 
@@ -861,10 +850,7 @@ int main(int argc, char** argv) {
 				memcpy(recvbuf, &nID, sizeof(unsigned short));
 				//打印 时间 客户端IP 域名 
 				
-				if (debug_level == 2)
-				{
-					printtime();
-				}
+				
 				//把recvbuf转发至指定的外部DNS服务器
 
 				iSend = sendto(socketServer, recvbuf, iRecv, 0, (SOCKADDR*)&serverName, sizeof(serverName));
@@ -883,7 +869,13 @@ int main(int argc, char** argv) {
 
 					break;
 
-
+				else
+				{
+					if (debug_level == 2)
+					{
+						printf("Send to %s : %d (%dBytes)  [ID %u -> %u]\n", inet_ntoa(serverName.sin_addr), iSend, iSend / 8, *pID, nID);
+					}
+				}
 
 				free(pID);	//释放动态分配的内存
 
@@ -936,7 +928,13 @@ int main(int argc, char** argv) {
 
 					break;
 
-
+				else
+				{
+					if (debug_level == 2)
+					{
+						printf("Send to %s : %d (%dBytes)  [ID %u -> %u]\n", inet_ntoa(serverName.sin_addr), iSend, iSend / 8, *pID, nID);
+					}
+				}
 
 				free(pID);	//释放动态分配的内存
 
@@ -964,7 +962,7 @@ int main(int argc, char** argv) {
 
 				//打印 时间 newID 功能 域名 IP
 
-				DisplayInfo(nID, find);
+		//		DisplayInfo(nID, find);
 
 
 
@@ -1073,7 +1071,13 @@ int main(int argc, char** argv) {
 				else if (iSend == 0)
 
 					break;
-
+				else
+				{
+					if (debug_level == 2)
+					{
+						printf("Send to %s : %d (%dBytes)  [ID %u -> %u]\n", inet_ntoa(serverName.sin_addr), iSend, iSend / 8, *pID, nID);
+					}
+				}
 
 
 				free(pID);		//释放动态分配的内存
