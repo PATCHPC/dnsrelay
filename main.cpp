@@ -410,6 +410,14 @@ int ReadTable(char* tablePath) {
 
 
 
+void printtime()
+{
+
+	SYSTEMTIME sys;
+	GetLocalTime(&sys);
+	printf("%4d/%02d/%02d %02d:%02d:%02d ", sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond);
+
+}
 
 
 
@@ -418,98 +426,13 @@ int ReadTable(char* tablePath) {
 void DisplayInfo(unsigned short newID, int find) {
 
 	//print time
-	
-		SYSTEMTIME sys;
-		GetLocalTime(&sys);
-		printf("%4d/%02d/%02d %02d:%02d:%02d.%03d \n", sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond, sys.wMilliseconds);
-	
+	printtime();
 
 	printf("    ");
 
-	//printf("Client %s  ", url);
-
-	//print new ID
-
-	printf("%-4u", newID);
-
-	printf("    ");
-
-
-
-	//if dns not found
-
-	if (find == NOTFOUND)
-
-	{
-
-		printf("    中继");
-
-		printf("    ");
-
-		//print url
-
-		printf("%-20s", url);
-
-		printf("    ");
-
-		//print IP
-
-		printf("                     \n");
-
-
-
-	}
-
-	//ip found
-
-	else
-
-	{
-
-		if (DNS_table[find].IP == "0.0.0.0")
-
-		{
-
-			printf("    屏蔽");
-
-			printf("    ");
-
-
-
-			printf("*%-19s", url);
-
-			printf("    ");
-
-
-
-			printf("                     \n");
-
-		}
-
-		else
-
-		{
-
-			printf("   服务器");
-
-			printf("    ");
-
-
-
-			printf("*%-19s", url);
-
-			printf("    ");
-
-
-
-			printf("%-20s\n", DNS_table[find].IP);
-
-		}
-
-	}
+	printf("Client 127.0.0.1   %s\n", url);
 
 }
-
 
 
 
@@ -522,6 +445,9 @@ void standard_print(char* buf, int length)
 
 	unsigned char tage;
 	int num;
+	SYSTEMTIME sys;
+	GetLocalTime(&sys);
+	printf("%4d/%02d/%02d %02d:%02d:%02d  ", sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond);
 
 	printf("receive len=%d: ", length);
 
@@ -628,7 +554,7 @@ int main(int argc, char** argv) {
 
 	int num;
 
-	int i, debug_level;
+	int i, debug_level = -1;
 
 	int count = 0;
 
@@ -906,13 +832,15 @@ int main(int argc, char** argv) {
 			int find = IsFind(url, num);		//在域名解析表中查找
 
 		
-			if (debug_level >= 1)
+			if (debug_level == 1)
 			{
 				printf("%d:  ", count);
-
+				printtime();
+				printf("Client: %s ", inet_ntoa(clientName.sin_addr));
+				printf(" %s\n", url);
 			}
-			count++;
-			printf("%s", url);
+        		count++;
+//			printf("%s", url);
 
 			//cout << url << endl;
 
@@ -931,12 +859,12 @@ int main(int argc, char** argv) {
 				unsigned short nID = htons(RegisterNewID(ntohs(*pID), clientName, FALSE));
 
 				memcpy(recvbuf, &nID, sizeof(unsigned short));
-				//打印 时间 newID 功能 域名 IP
-				if (debug_level == 1)
+				//打印 时间 客户端IP 域名 
+				
+				if (debug_level == 2)
 				{
-                     DisplayInfo(ntohs(nID), find);
+					printtime();
 				}
-
 				//把recvbuf转发至指定的外部DNS服务器
 
 				iSend = sendto(socketServer, recvbuf, iRecv, 0, (SOCKADDR*)&serverName, sizeof(serverName));
