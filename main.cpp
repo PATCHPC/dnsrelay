@@ -428,11 +428,7 @@ void standard_print(char* buf, int length)
 
 	unsigned char tage;
 	int num;
-	SYSTEMTIME sys;
-	GetLocalTime(&sys);
-	printf("%4d/%02d/%02d %02d:%02d:%02d  ", sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond);
-
-	printf("receive len=%d: ", length);
+	
 
 	for (int i = 0; i < length; i++)
 
@@ -826,7 +822,8 @@ int main(int argc, char** argv) {
 			{
 				printf("%d:  ", count);
 				printtime();
-				
+				printf("RECV from %s : %d (%dBytes)  ", inet_ntoa(clientName.sin_addr), iSend, iSend / 8);
+				standard_print(recvbuf, iRecv);
 			}
         		count++;
 //			printf("%s", url);
@@ -901,7 +898,11 @@ int main(int argc, char** argv) {
 
 				idTransTable[m].DONE = TRUE;
 
-
+				if (debug_level == 2)
+				{
+					printf("RECV from %s : %d (%dBytes)  ", inet_ntoa(clientName.sin_addr), iSend, iSend / 8);
+					standard_print(recvbuf, iRecv);
+				}
 
 				//从ID转换表中获取发出DNS请求者的信息
 
