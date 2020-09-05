@@ -249,7 +249,7 @@ void GetUrl(char* recvbuf, int recvnum)
 
 	}
 
-	url[k] = '\0';
+	url[k] = '\n';
 
 }
 
@@ -385,7 +385,7 @@ int ReadTable(char* tablePath) {
 
 			strncpy(DNS_table[j].IP, table[j], abs(pos - table[j]));
 
-			strcpy(DNS_table[j].domain, pos);
+			strcpy(DNS_table[j].domain, pos + 1);
 
 			//DNS_table[j].IP = table[j].substr(0, pos);
 
