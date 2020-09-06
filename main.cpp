@@ -127,9 +127,9 @@ int IDcount = 0;
 
 /////////////////算法（？）函数////////////////
 
-//读取DNS请求中的域名
+//读取DNS请求中的域名,返回域名占用总长度
 
-void GetUrl(char* recvbuf, int recvnum);
+int GetUrl(char* recvbuf, int recvnum);   
 
 //判断是否在表中找到DNS请求中的域名，找到返回下标
 
@@ -152,7 +152,7 @@ void DisplayInfo(unsigned short newID, int find);
 
 //读取DNS请求中的域名
 
-void GetUrl(char* recvbuf, int recvnum)
+int GetUrl(char* recvbuf, int recvnum)
 
 {
 
@@ -160,7 +160,7 @@ void GetUrl(char* recvbuf, int recvnum)
 
 	int i = 0, j, k = 0;
 
-	memset(url, 0, LENGTH);
+	memset(url, 0, LENGTH);   //以字节为单位拷贝
 
 	memcpy(urlname, &(recvbuf[sizeof(DNSHeader)]), recvnum - 16);	//获取请求报文中的域名表示
 
@@ -183,11 +183,14 @@ void GetUrl(char* recvbuf, int recvnum)
 			k++;
 
 		}
-
+		if (urlname[i] == 0)
+		{
+			break;
+		}
 	}
 
-	url[k] = '\n';
-
+	url[k] = '\0';
+	return i + 1;
 }
 
 //判断是否在表中找到DNS请求中的域名，找到返回下标
@@ -301,13 +304,14 @@ int ReadTable(char* tablePath) {
 			strncpy(DNS_table[j].IP, table[j], abs(pos - table[j]));
 
 			strcpy(DNS_table[j].domain, pos + 1);
+			DNS_table[j].domain[strlen(DNS_table[j].domain) - 1] = '\0';
 
 			//DNS_table[j].IP = table[j].substr(0, pos);
 
 			//DNS_table[j].domain = table[j].substr(pos+1);
 
 		}
-
+		
 	}
 
 	fclose(fp);		//关闭文件
@@ -335,7 +339,8 @@ void standard_print(char* buf, int length)
 
 	unsigned char tage;
 	int num;
-
+	unsigned short* p ;
+	unsigned char* p1 = (unsigned char*)buf;  //8位
 
 	for (int i = 0; i < length; i++)
 
@@ -347,71 +352,37 @@ void standard_print(char* buf, int length)
 
 	}
 	printf("\n");
-	for (int i = 0; i < length; i++)
-
-	{
-
-		tage = (unsigned char)buf[i];
-		if (i == 0)
-		{
-			printf("ID %02x", tage);
-		}
-		if (i == 1)
-			printf("%02x, ", tage);
-		if (i == 2)
-		{
-			printf("QR %x, ", tage >> 7);
-			printf("OPCODE %x, ", (tage << 1) >> 4);
-			printf("AA %x, ", (tage << 5) >> 7);
-			printf("TC %x, ", (tage << 6) >> 7);
-			printf("RD %x, ", (tage << 7) >> 7);
-		}
-		if (i == 3)
-		{
-			printf("RA %x, ", tage >> 7);
-			printf("Z %x, ", (tage << 1) >> 5);
-			printf("RCODE %x\n", (tage << 4) >> 4);
-		}
-		if (i == 4)
-		{
-			num = (int)tage;
-		}
-		if (i == 5)
-		{
-			printf("QDCOUNT %d ,", num * 128 + (int)tage);
-		}
-
-		if (i == 6)
-		{
-			num = (int)tage;
-		}
-		if (i == 7)
-		{
-			printf("ANCOUNT %d ,", num * 128 + (int)tage);
-		}
-		if (i == 8)
-		{
-			num = (int)tage;
-		}
-		if (i == 9)
-		{
-			printf("NSCOUNT %d ,", num * 128 + (int)tage);
-		}
-		if (i == 10)
-		{
-			num = (int)tage;
-		}
-		if (i == 11)
-		{
-			printf("ARCOUNT %d ", num * 128 + (int)tage);
-		}
-	}
+	printf("      ");
+	printf("ID %02x", *p1);
+	p1++;
+	printf("%02x, ", *p1);
+	p1++;
+	printf("QR %x, ", ((*p1) & (0x80)) >> 7);
+	printf("OPCODE %x, ", ((*p1) & (0x78)) >> 3);
+	printf("AA %x, ", ((*p1) & (0x04)) >> 2);
+	printf("TC %x, ", ((*p1) & (0x02)) >> 1);
+	printf("RD %x, ", (*p1) & (0x01));
+	p1++;
+	printf("RA %x, ", ((*p1) & (0x80)) >> 7);
+	printf("Z %x, ", ((*p1) & (0x70)) >> 4);
+	printf("RCODE %x\n", (*p1) & (0x0F));
+	p1++;
+	printf("      ");
+	p = (unsigned short*)p1;
+	printf("QDCOUNT %d, ",ntohs(*p));
+	p++;
+	printf("ANCOUNT %d, ", ntohs(*p));
+	p++;
+	printf("NSCOUNT %d, ", ntohs(*p));
+	p++;
+	printf("ARCOUNT %d, ", ntohs(*p));
 	printf("\n");
+
 
 }
 
 int main(int argc, char** argv) {
-	   
+
 	//定义常量
 
 	WSADATA wsaData;
@@ -460,7 +431,7 @@ int main(int argc, char** argv) {
 
 		strcpy(outerDns, DEFAULT_DNS_ADDRESS);
 
-		strcpy(tablePath, "E:\\adns\\dnsrelay.txt");   //需要加入路径
+		strcpy(tablePath, "dnsrelay.txt");   //需要加入路径
 
 	}
 
@@ -494,7 +465,7 @@ int main(int argc, char** argv) {
 
 				strcpy(outerDns, DEFAULT_DNS_ADDRESS);
 
-				strcpy(tablePath, "E:\\adns\\dnsrelay.txt");   //需要加入路径
+				strcpy(tablePath, "dnsrelay.txt");   //需要加入路径
 
 			}
 
@@ -508,7 +479,7 @@ int main(int argc, char** argv) {
 
 					strcpy(outerDns, argv[2]);
 
-					strcpy(tablePath, "E:\\adns\\dnsrelay.txt");
+					strcpy(tablePath, "dnsrelay.txt");
 
 				}
 
@@ -556,7 +527,7 @@ int main(int argc, char** argv) {
 
 			{
 
-				strcpy(tablePath, "E:\\adns\\dnsrelay.txt");   //dnsrelay 1.1.1.1 
+				strcpy(tablePath, "dnsrelay.txt");   //dnsrelay 1.1.1.1 
 
 			}
 
@@ -629,7 +600,7 @@ int main(int argc, char** argv) {
 	localName.sin_port = htons(DNS_PORT);
 
 	localName.sin_addr.s_addr = inet_addr(DEFAULT_LOCAL_ADDRESS); //set to local address
-	
+
 	serverName.sin_family = AF_INET;
 
 	serverName.sin_port = htons(DNS_PORT);
@@ -664,11 +635,11 @@ int main(int argc, char** argv) {
 		iLen_cli = sizeof(clientName);
 
 		memset(recvbuf, 0, BUF_SIZE);
-			   
+
 		//接受DNS请求
 
 		iRecv = recvfrom(socketLocal, recvbuf, sizeof(recvbuf), 0, (SOCKADDR*)&clientName, &iLen_cli);
-		
+
 		memset(&iSend, 0, sizeof(int));
 
 		if (iRecv == SOCKET_ERROR) {
@@ -687,8 +658,14 @@ int main(int argc, char** argv) {
 
 		else {
 			//iRecv为读入的字节数
-			GetUrl(recvbuf, iRecv);				//获取域名
-
+			int ulen;
+			unsigned short* pout;
+			unsigned char* ptemp;
+			ulen = GetUrl(recvbuf, iRecv);				//获取域名
+			ptemp = (unsigned char*)recvbuf;
+			ptemp += 12;
+			ptemp += ulen;
+			pout = (unsigned short*)ptemp;
 			int find = IsFind(url, num);		//在域名解析表中查找
 
 
@@ -701,13 +678,18 @@ int main(int argc, char** argv) {
 			}
 			if (debug_level == 2)
 			{
+                printf("RECV from %s : %d (%dBytes)  ", inet_ntoa(clientName.sin_addr), iSend, iSend / 8);
+                standard_print(recvbuf, iRecv);
 				printf("%d:  ", count);
 				printtime();
-				printf("RECV from %s : %d (%dBytes)  ", inet_ntoa(clientName.sin_addr), iSend, iSend / 8);
-				standard_print(recvbuf, iRecv);
+				printf("    Client: %s ", inet_ntoa(clientName.sin_addr));
+				printf("    %s,", url);
+				printf("    TYPE %d,", ntohs(*pout));
+				pout++;
+				printf("    CLASS %d\n", ntohs(*pout));
 			}
 			count++;
-			//			printf("%s", url);
+			//printf("%s", url);
 
 						//cout << url << endl;
 
@@ -751,7 +733,7 @@ int main(int argc, char** argv) {
 				{
 					if (debug_level == 2)
 					{
-						printf("Send to %s : %d (%dBytes)  [ID %u -> %u]\n", inet_ntoa(serverName.sin_addr), iSend, iSend / 8, *pID, nID);
+						printf("Send to %s : %d (%dBytes)  [ID %04x -> %04x]\n", inet_ntoa(serverName.sin_addr), iSend, iSend / 8, *pID, ntohs(nID));
 					}
 				}
 
@@ -808,7 +790,7 @@ int main(int argc, char** argv) {
 				{
 					if (debug_level == 2)
 					{
-						printf("Send to %s : %d (%dBytes)  [ID %u -> %u]\n", inet_ntoa(serverName.sin_addr), iSend, iSend / 8, *pID, nID);
+						printf("Send to %s : %d (%dBytes)  [ID %04x -> %04x]\n", inet_ntoa(serverName.sin_addr), iSend, iSend / 8, ntohs(*pID), oID);
 					}
 				}
 
@@ -853,8 +835,12 @@ int main(int argc, char** argv) {
 
 
 				if (strcmp(DNS_table[find].IP, "0.0.0.0") == 0)
-
+				{
 					a = htons(0x0000);	//屏蔽功能：回答数为0
+					printf("已拦截屏蔽网站！  ");
+				}
+
+					
 
 				else
 
@@ -947,7 +933,7 @@ int main(int argc, char** argv) {
 				{
 					if (debug_level == 2)
 					{
-						printf("Send to %s : %d (%dBytes)  [ID %u -> %u]\n", inet_ntoa(serverName.sin_addr), iSend, iSend / 8, *pID, nID);
+						printf("Send to %s : %d (%dBytes)  [ID %04x -> %04x]\n", inet_ntoa(serverName.sin_addr), iSend, iSend / 8, *pID, nID);
 					}
 				}
 
@@ -966,4 +952,3 @@ int main(int argc, char** argv) {
 	WSACleanup();				//释放ws2_32.dll动态链接库初始化时分配的资源
 
 }
-
