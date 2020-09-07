@@ -10,30 +10,17 @@
 
 #include <Windows.h>
 
-//#include <WinSock2.h>
-
-//#include <tm32f10x.h>
-
 #include <stdint.h>
 
 #include<time.h>
-#include<iostream>
-
-//#include<sys/time.h>
-#include<stdint.h>
-
-using namespace std;
-
 
 #pragma warning(disable:4996)
-
-//using namespace std;
 
 #pragma comment(lib,"wsock32.lib")
 
 //域名解析表最大长度
 
-#define MAX_AMOUNT 500
+#define MAX_AMOUNT 1000   //解析表最大容量
 
 #define DEFAULT_DNS_ADDRESS "10.3.9.4" //外部DNS服务器地址
 
@@ -41,13 +28,13 @@ using namespace std;
 
 #define DNS_PORT 53 //进行DNS服务的53端口
 
-#define BUF_SIZE 1024
+#define BUF_SIZE 1024   //缓冲区最大容量（字节）
 
-#define LENGTH 100
+#define LENGTH 100  //域名最大长度
 
-#define NOTFOUND -1
+#define NOTFOUND -1  //在解析表中未找到域名
 
-#define AMOUNT 600
+
 
 ///////////////////结构体的定义////////////////
 
@@ -103,29 +90,25 @@ typedef struct {
 
 	unsigned short formerID;
 
-	BOOL DONE;
+	BOOL DONE;     //标记是否完成解析
 
-	SOCKADDR_IN client;
+	SOCKADDR_IN client;   //网络地址
 
 }IDTransform;
 
-//常量的定义
+/////////常量的定义///////////
 
-//为防止重复定义加了extern
+IPTranslate DNS_table[MAX_AMOUNT];    //域名-IP解析表
 
-IPTranslate DNS_table[MAX_AMOUNT];
+IDTransform idTransTable[MAX_AMOUNT];  //ID转换表
 
-IDTransform idTransTable[MAX_AMOUNT];
+char url[LENGTH];//域名 
 
-char url[LENGTH];//域名 （为啥要放全局啊俺也不懂
+int IDcount = 0;    //ID表下标
 
-SYSTEMTIME sys;
+int debug_level = -1;
 
-int Day, Hour, Minute, Second, Milliseconds;
-
-int IDcount = 0;
-
-/////////////////算法（？）函数////////////////
+/////////////////函数////////////////
 
 //读取DNS请求中的域名,返回域名占用总长度
 
@@ -139,18 +122,18 @@ int IsFind(char* url, int num);
 
 unsigned short RegisterNewID(unsigned short oID, SOCKADDR_IN temp, BOOL ifdone);
 
+//参数解析
+
+void debuglevelJudge(int argc, char** argv, char* tablePath, char* outerDns);
+
+
 /////////////////// IO ///////////////////
 
 //函数：读取域名解析表
 
 int ReadTable(char* tablePath);
 
-//IO：打印时间、新id、功能、域名、IP
-
-void DisplayInfo(unsigned short newID, int find);
-
-
-//读取DNS请求中的域名
+//读取DNS请求中的域名，返回域名域字节数
 
 int GetUrl(char* recvbuf, int recvnum)
 
@@ -162,8 +145,9 @@ int GetUrl(char* recvbuf, int recvnum)
 
 	memset(url, 0, LENGTH);   //以字节为单位拷贝
 
-	memcpy(urlname, &(recvbuf[sizeof(DNSHeader)]), recvnum - 16);	//获取请求报文中的域名表示
-
+	memcpy(urlname, &(recvbuf[sizeof(DNSHeader)]), recvnum - 12);	//获取请求报文中的域名表示
+	//printf("*********%x************\n", *(unsigned char*)recvbuf);
+	//printf("!!!!!!!!!!%x!!!!!!!!!!!\n", *(unsigned char*)urlname);
 	int len = strlen(urlname);
 
 	//域名转换
@@ -205,11 +189,8 @@ int IsFind(char* url, int num)
 
 	for (int i = 0; i < num; i++) {
 
-		//strcpy(domain, DNS_table[i].domain);
 
 		domain = DNS_table[i].domain;
-
-		//domain = (char*)DNS_table[i].domain.c_str();
 
 		if (strcmp(domain, url) == 0) {	//找到
 
@@ -230,9 +211,6 @@ int IsFind(char* url, int num)
 unsigned short RegisterNewID(unsigned short oID, SOCKADDR_IN temp, BOOL ifdone)
 
 {
-
-	srand(time(NULL));
-
 	idTransTable[IDcount].formerID = oID;
 
 	idTransTable[IDcount].client = temp;
@@ -253,13 +231,12 @@ int ReadTable(char* tablePath) {
 
 	char* pos;
 
-	char* table[AMOUNT];
+	char* table[MAX_AMOUNT];
 
 	FILE* fp;
 
-	//ifstream infile(tablePath, ios::in);	//以读入方式打开文本文件
-
-	if ((fp = fopen(tablePath, "rt")) == NULL) {
+	if ((fp = fopen(tablePath, "rt")) == NULL) 
+	{
 
 		printf("Open file error!\n");
 
@@ -273,10 +250,10 @@ int ReadTable(char* tablePath) {
 
 	memset(table[i], 0, 100);
 
-	while (fgets(table[i], 100, fp) && i < AMOUNT)
+	while (fgets(table[i], 100, fp) && i < MAX_AMOUNT)
 
 	{
-
+		
 		i++;
 
 		table[i] = (char*)malloc(100 * sizeof(char));
@@ -285,7 +262,7 @@ int ReadTable(char* tablePath) {
 
 	}
 
-	if (i == AMOUNT)
+	if (i == MAX_AMOUNT)
 
 		printf("The DNS table memory is full. \n");
 
@@ -299,16 +276,17 @@ int ReadTable(char* tablePath) {
 
 		else {
 
-			//DNS_table[j] = (IPTranslate*)malloc(sizeof(IPTranslate));
-
 			strncpy(DNS_table[j].IP, table[j], abs(pos - table[j]));
 
 			strcpy(DNS_table[j].domain, pos + 1);
+
+			if (debug_level == 2)
+			{
+				printf("%d  %s  %s", j + 1, DNS_table[j].IP, DNS_table[j].domain);
+			}
+			
+
 			DNS_table[j].domain[strlen(DNS_table[j].domain) - 1] = '\0';
-
-			//DNS_table[j].IP = table[j].substr(0, pos);
-
-			//DNS_table[j].domain = table[j].substr(pos+1);
 
 		}
 		
@@ -322,107 +300,8 @@ int ReadTable(char* tablePath) {
 
 }
 
-void printtime()
+void debuglevelJudge(int argc, char** argv, char* tablePath, char* outerDns)
 {
-
-	SYSTEMTIME sys;
-	GetLocalTime(&sys);
-	printf("%4d/%02d/%02d %02d:%02d:%02d ", sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond);
-
-}
-
-//输出完整信息
-
-void standard_print(char* buf, int length)
-
-{
-
-	unsigned char tage;
-	int num;
-	unsigned short* p ;
-	unsigned char* p1 = (unsigned char*)buf;  //8位
-
-	for (int i = 0; i < length; i++)
-
-	{
-
-		tage = (unsigned char)buf[i];
-
-		printf("%02x ", tage);
-
-	}
-	printf("\n");
-	printf("      ");
-	printf("ID %02x", *p1);
-	p1++;
-	printf("%02x, ", *p1);
-	p1++;
-	printf("QR %x, ", ((*p1) & (0x80)) >> 7);
-	printf("OPCODE %x, ", ((*p1) & (0x78)) >> 3);
-	printf("AA %x, ", ((*p1) & (0x04)) >> 2);
-	printf("TC %x, ", ((*p1) & (0x02)) >> 1);
-	printf("RD %x, ", (*p1) & (0x01));
-	p1++;
-	printf("RA %x, ", ((*p1) & (0x80)) >> 7);
-	printf("Z %x, ", ((*p1) & (0x70)) >> 4);
-	printf("RCODE %x\n", (*p1) & (0x0F));
-	p1++;
-	printf("      ");
-	p = (unsigned short*)p1;
-	printf("QDCOUNT %d, ",ntohs(*p));
-	p++;
-	printf("ANCOUNT %d, ", ntohs(*p));
-	p++;
-	printf("NSCOUNT %d, ", ntohs(*p));
-	p++;
-	printf("ARCOUNT %d, ", ntohs(*p));
-	printf("\n");
-
-
-}
-
-int main(int argc, char** argv) {
-
-	//定义常量
-
-	WSADATA wsaData;
-
-	SOCKET  socketServer, socketLocal;				//本地DNS和外部DNS两个套接字
-
-	SOCKADDR_IN serverName, clientName, localName;	//本地DNS、外部DNS和请求端三个网络套接字地址
-
-	char sendbuf[BUF_SIZE];
-
-	char recvbuf[BUF_SIZE];
-
-	char tablePath[100];
-
-	char outerDns[16];
-
-	int iLen_cli, iSend, iRecv;
-
-	int num;
-
-	int i, debug_level = -1;
-
-	int count = 0;
-
-	//分析指令
-
-	//（删）这一块和参考的地方有所区别。[已删]
-
-	GetLocalTime(&sys);
-
-	Day = sys.wDay;
-
-	Hour = sys.wHour;
-
-	Minute = sys.wMinute;
-
-	Second = sys.wSecond;
-
-	Milliseconds = sys.wMilliseconds;
-
 	if (argc == 1)   //只有denrelay，全为默认值
 
 	{
@@ -448,6 +327,9 @@ int main(int argc, char** argv) {
 			{
 
 				debug_level = 2;
+				strcpy(outerDns, DEFAULT_DNS_ADDRESS);
+
+				strcpy(tablePath, "dnsrelay.txt");
 
 			}
 
@@ -544,14 +426,132 @@ int main(int argc, char** argv) {
 			strcpy(tablePath, argv[1]);  //dnsrelay C:
 
 		}
+	}
+}
 
+void printtime()
+{
 
+	SYSTEMTIME sys;
+
+	GetLocalTime(&sys);
+
+	printf("%4d/%02d/%02d %02d:%02d:%02d ", sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond);
+
+}
+
+//输出完整信息
+
+void standard_print(char* buf, int length)
+
+{
+
+	unsigned char tage;
+
+	int num;
+
+	unsigned short* p ;
+
+	unsigned char* p1 = (unsigned char*)buf;  //8位
+
+	for (int i = 0; i < length; i++)
+
+	{
+
+		tage = (unsigned char)buf[i];
+
+		printf("%02x ", tage);
 
 	}
+	printf("\n");
 
-	//inicialize the ID table
+	printf("      ");
 
-	for (i = 0; i < AMOUNT; i++)
+	printf("ID %02x", *p1);
+
+	p1++;
+
+	printf("%02x, ", *p1);
+
+	p1++;
+
+	printf("QR %x, ", ((*p1) & (0x80)) >> 7);
+
+	printf("OPCODE %x, ", ((*p1) & (0x78)) >> 3);
+
+	printf("AA %x, ", ((*p1) & (0x04)) >> 2);
+
+	printf("TC %x, ", ((*p1) & (0x02)) >> 1);
+
+	printf("RD %x, ", (*p1) & (0x01));
+
+	p1++;
+
+	printf("RA %x, ", ((*p1) & (0x80)) >> 7);
+
+	printf("Z %x, ", ((*p1) & (0x70)) >> 4);
+
+	printf("RCODE %x\n", (*p1) & (0x0F));
+
+	p1++;
+
+	printf("      ");
+
+	p = (unsigned short*)p1;
+
+	printf("QDCOUNT %d, ",ntohs(*p));
+
+	p++;
+
+	printf("ANCOUNT %d, ", ntohs(*p));
+
+	p++;
+
+	printf("NSCOUNT %d, ", ntohs(*p));
+
+	p++;
+
+	printf("ARCOUNT %d, ", ntohs(*p));
+
+	printf("\n");
+
+
+}
+
+
+int main(int argc, char** argv) {
+
+	//定义常量
+
+	WSADATA wsaData;
+
+	SOCKET  socketServer, socketLocal;				//本地DNS和外部DNS两个套接字（不同主机应用层进程之间通信）
+
+	SOCKADDR_IN serverName, clientName, localName;	//本地DNS、外部DNS和请求端三个网络套接字地址（地址族、端口号、IP）
+
+	char sendbuf[BUF_SIZE];
+
+	char recvbuf[BUF_SIZE];
+
+	char tablePath[100];
+
+	char outerDns[16];
+
+	int iLen_cli, iSend, iRecv;
+
+	int num;   //dnsrelay.txt长度
+
+	int i;
+
+	int count = 0;  //序号
+
+	//分析指令
+	debuglevelJudge(argc, argv,tablePath, outerDns);
+	
+
+	//初始化ID转换表
+
+	for (i = 0; i < MAX_AMOUNT; i++)
 
 	{
 
@@ -562,8 +562,8 @@ int main(int argc, char** argv) {
 		memset(&(idTransTable[i].client), 0, sizeof(SOCKADDR_IN));
 
 	}
-
-	for (i = 0; i < AMOUNT; i++)
+	//初始化IP、域名对应表
+	for (i = 0; i < MAX_AMOUNT; i++)
 
 	{
 
@@ -578,24 +578,18 @@ int main(int argc, char** argv) {
 	}
 
 
-	WSAStartup(MAKEWORD(2, 2), &wsaData);           //initialize the WinSock service
+	WSAStartup(MAKEWORD(2, 2), &wsaData);           //启动套接字
 	//创建本地DNS和外部DNS套接字
-	socketServer = socket(AF_INET, SOCK_DGRAM, 0);  //create extern socket
+	socketServer = socket(AF_INET, SOCK_DGRAM, 0);  //创建外部套接字
 
-	socketLocal = socket(AF_INET, SOCK_DGRAM, 0);   //create local socket
+	socketLocal = socket(AF_INET, SOCK_DGRAM, 0);   //创建本地套接字
 
 	//////////////////////////////////////////////////////////////////////
-	/*
-	int non_block = 1;
-	ioctlsocket(socketServer, FIONBIO, (u_long FAR*) & non_block);
-	ioctlsocket(socketLocal, FIONBIO, (u_long FAR*) & non_block);*/
-	//socketServer = socket(AF_INET, SOCK_DGRAM, IPPROTO_TCP|IPPROTO_UDP|IPPROTO_ICMP);
-	//socketLocal = socket(AF_INET, SOCK_DGRAM, IPPROTO_TCP | IPPROTO_UDP | IPPROTO_ICMP);
 
-	//设置本地DNS和外部DNS两个套接字
-	//inicialize the socket
 
-	localName.sin_family = AF_INET;
+	//初始化本地DNS和外部DNS两个套接字
+
+	localName.sin_family = AF_INET;   //IPv4
 
 	localName.sin_port = htons(DNS_PORT);
 
@@ -612,7 +606,8 @@ int main(int argc, char** argv) {
 	int reuse = 1;
 	setsockopt(socketLocal, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(reuse));*/
 
-	if (bind(socketLocal, (SOCKADDR*)&localName, sizeof(localName))) {
+	if (bind(socketLocal, (SOCKADDR*)&localName, sizeof(localName))) 
+	{  //绑定本地地址和套接口
 
 		printf("Binding Port 53 failed.\n");
 
@@ -621,36 +616,46 @@ int main(int argc, char** argv) {
 	}
 
 	else
+	{
 
 		printf("Binding Port 53 succeed.\n");
 
+	}
 
 	num = ReadTable(tablePath);  //the number of the table
 
 
 	//本地DNS中继服务器的具体操作
 
-	while (1) {
+	while (1) 
+	{
 
-		iLen_cli = sizeof(clientName);
+		int iLen_cli = sizeof(clientName);
 
 		memset(recvbuf, 0, BUF_SIZE);
 
 		//接受DNS请求
-
-		iRecv = recvfrom(socketLocal, recvbuf, sizeof(recvbuf), 0, (SOCKADDR*)&clientName, &iLen_cli);
+		//recvfrom成功则返回实际接收到的字符数，失败返回-1，错误原因会存于errno 中
+		//clientname的结构
+		//struct sockaddr_in {
+		//	short   sin_family;
+		//	u_short sin_port;
+		//	struct  in_addr sin_addr;
+		//	char    sin_zero[8];
+		//};
+		iRecv = recvfrom(socketLocal, recvbuf, sizeof(recvbuf), 0, (SOCKADDR*)&clientName, &iLen_cli);   //（本地套接字，buf，buflen，flag，from指针，*fromlen）
 
 		memset(&iSend, 0, sizeof(int));
 
 		if (iRecv == SOCKET_ERROR) {
-			//	cout << WSAGetLastError();
-	//			printf("Recvfrom Failed:%s\n", WSAGetLastError());
+
+		    printf("Recvfrom Failed:%d\n", WSAGetLastError());
 
 			continue;
 
 		}
 
-		else if (iRecv == 0) {//连接已经中止
+		else if (iRecv == 0) {//对方关闭连接
 
 			break;
 
@@ -661,14 +666,14 @@ int main(int argc, char** argv) {
 			int ulen;
 			unsigned short* pout;
 			unsigned char* ptemp;
-			ulen = GetUrl(recvbuf, iRecv);				//获取域名
-			ptemp = (unsigned char*)recvbuf;
+			ulen = GetUrl(recvbuf, iRecv);				//获取域名，返回名字域长度
+			ptemp = (unsigned char*)recvbuf;           //定位QTYPE首地址
 			ptemp += 12;
 			ptemp += ulen;
-			pout = (unsigned short*)ptemp;
+			pout = (unsigned short*)ptemp;            //输出QTYPE和QCLASS
 			int find = IsFind(url, num);		//在域名解析表中查找
 
-
+			//输出
 			if (debug_level == 1)
 			{
 				printf("%d:  ", count);
@@ -689,45 +694,38 @@ int main(int argc, char** argv) {
 				printf("    CLASS %d\n", ntohs(*pout));
 			}
 			count++;
-			//printf("%s", url);
-
-						//cout << url << endl;
-
-
-
+		
 			//在域名解析表中没有找到
 
-			if (find == NOTFOUND) {
+			if (find == NOTFOUND) 
+			{
 
-				//ID转换
+				unsigned short* pID = (unsigned short*)malloc(sizeof(unsigned short));   //两字节ID
 
-				unsigned short* pID = (unsigned short*)malloc(sizeof(unsigned short));
+				memcpy(pID, recvbuf, sizeof(unsigned short));    //报文最前面就是ID
 
-				memcpy(pID, recvbuf, sizeof(unsigned short));
+				unsigned short nID = htons(RegisterNewID(ntohs(*pID), clientName, FALSE));    //机器数变成网络数
 
-				unsigned short nID = htons(RegisterNewID(ntohs(*pID), clientName, FALSE));
-
-				memcpy(recvbuf, &nID, sizeof(unsigned short));
-				//打印 时间 客户端IP 域名 
+				memcpy(recvbuf, &nID, sizeof(unsigned short));    //ID转换
 
 
 				//把recvbuf转发至指定的外部DNS服务器
 
-				iSend = sendto(socketServer, recvbuf, iRecv, 0, (SOCKADDR*)&serverName, sizeof(serverName));
-				//WSAGetLastError();
-				if (iSend == SOCKET_ERROR) {
-					//		printf("!!!\n");
-					//		printf("sendto Failed:%s\n", WSAGetLastError());
+				iSend = sendto(socketServer, recvbuf, iRecv, 0, (SOCKADDR*)&serverName, sizeof(serverName));    //（服务器套接字，buf，buflen，flag，to指针，tolen）
+				if (iSend == SOCKET_ERROR) 
+				{
 
-					cout << "sendto Failed: " << WSAGetLastError() << endl;
+					printf("sendto Failed:%d\n", WSAGetLastError());
 
 					continue;
-
 				}
 
 				else if (iSend == 0)
+				{
 
 					break;
+
+				}
 
 				else
 				{
@@ -749,11 +747,11 @@ int main(int argc, char** argv) {
 
 				memcpy(pID, recvbuf, sizeof(unsigned short));
 
-				int m = ntohs(*pID);
+				int m = ntohs(*pID);     //新ID是转换表中的下标，通过下标找到记录
 
-				unsigned short oID = htons(idTransTable[m].formerID);
+				unsigned short oID = htons(idTransTable[m].formerID);  //oldID是一个网络数
 
-				memcpy(recvbuf, &oID, sizeof(unsigned short));
+				memcpy(recvbuf, &oID, sizeof(unsigned short));   //把oldID放回报头传回客户端
 
 				idTransTable[m].DONE = TRUE;
 
@@ -771,20 +769,18 @@ int main(int argc, char** argv) {
 
 				iSend = sendto(socketLocal, recvbuf, iRecv, 0, (SOCKADDR*)&clientName, sizeof(clientName));
 
-				if (iSend == SOCKET_ERROR) {
+				if (iSend == SOCKET_ERROR)
+				{
 
-					//		printf("send to Failed:%s \n", WSAGetLastError());
+					printf("send to Failed:%d \n", WSAGetLastError());
 
-					cout << "sendto Failed: " << WSAGetLastError() << endl;
-					//cout << WSAGetLastError() 
-
-					continue;
-
+					return 1;
 				}
 
 				else if (iSend == 0)
-
-					break;
+				{
+					return -1;
+				}
 
 				else
 				{
@@ -795,7 +791,6 @@ int main(int argc, char** argv) {
 				}
 
 				free(pID);	//释放动态分配的内存
-
 			}
 
 
@@ -814,25 +809,16 @@ int main(int argc, char** argv) {
 
 				unsigned short nID = RegisterNewID(ntohs(*pID), clientName, FALSE);
 
-				//打印 时间 newID 功能 域名 IP
-
-		//		DisplayInfo(nID, find);
-
-
 
 				//构造响应报文返回
 
 				memcpy(sendbuf, recvbuf, iRecv);						//拷贝请求报文
 
-				unsigned short a = htons(0x8180);
+				unsigned short a = htons(0x8180);   //QR=1，RD=1，RA=1
 
 				memcpy(&sendbuf[2], &a, sizeof(unsigned short));		//修改标志域
 
-
-
 				//修改回答数域
-
-
 
 				if (strcmp(DNS_table[find].IP, "0.0.0.0") == 0)
 				{
@@ -840,23 +826,20 @@ int main(int argc, char** argv) {
 					printf("已拦截屏蔽网站！  ");
 				}
 
-					
-
 				else
+					a = htons(0x0001);	//服务器功能回答数为1
 
-					a = htons(0x0001);	//服务器功能：回答数为1
-
-				memcpy(&sendbuf[6], &a, sizeof(unsigned short));
+				memcpy(&sendbuf[6], &a, sizeof(unsigned short));  //修改ANCOUNT
 
 				int curLen = 0;
 
-
-
 				//构造DNS响应部分
 
-				char answer[16];
-
-				unsigned short Name = htons(0xc00c);
+				char answer[16];   //16字节应答
+				//DNS协议消息压缩技术，使用偏移指针代替重复的字符串。该指针用两个8bit表示
+				//最开始的两个bit必须都为1后面的14bit表示字符串在整个DNS消息包中的偏移量。
+				//其中第一个出现的域名偏移量固定为12字节（00001100），加上最开始的两个1，那二进制就是
+				unsigned short Name = htons(0xc00c);    //1100 0000 0000 1100
 
 				memcpy(answer, &Name, sizeof(unsigned short));
 
@@ -864,6 +847,7 @@ int main(int argc, char** argv) {
 
 
 
+				//类型A
 				unsigned short TypeA = htons(0x0001);
 
 				memcpy(answer + curLen, &TypeA, sizeof(unsigned short));
@@ -871,7 +855,7 @@ int main(int argc, char** argv) {
 				curLen += sizeof(unsigned short);
 
 
-
+				//类型in1
 				unsigned short ClassA = htons(0x0001);
 
 				memcpy(answer + curLen, &ClassA, sizeof(unsigned short));
@@ -880,7 +864,7 @@ int main(int argc, char** argv) {
 
 
 
-				unsigned long timeLive = htonl(0x7b);
+				unsigned long timeLive = htonl(0x7b);     
 
 				memcpy(answer + curLen, &timeLive, sizeof(unsigned long));
 
@@ -888,14 +872,14 @@ int main(int argc, char** argv) {
 
 
 
-				unsigned short IPLen = htons(0x0004);
+				unsigned short IPLen = htons(0x0004);    //长度：4字节
 
 				memcpy(answer + curLen, &IPLen, sizeof(unsigned short));
 
 				curLen += sizeof(unsigned short);
 
 
-
+				//解析出的IP
 				unsigned long IP = (unsigned long)inet_addr(DNS_table[find].IP);
 
 				memcpy(answer + curLen, &IP, sizeof(unsigned long));
