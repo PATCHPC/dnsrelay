@@ -786,7 +786,7 @@ int main(int argc, char** argv) {
 				{
 					if (debug_level == 2)
 					{
-						printf("Send to %s : %d (%dBytes)  [ID %04x -> %04x]\n", inet_ntoa(serverName.sin_addr), iSend, iSend / 8, ntohs(*pID), oID);
+						printf("Send to %s : %d (%dBytes)  [ID %04x -> %04x]\n", inet_ntoa(clientName.sin_addr), iSend, iSend / 8, ntohs(*pID), oID);
 					}
 				}
 
